@@ -352,6 +352,25 @@ export class AuthService {
       throw new BadRequestException('Invalid or expired reset token');
     }
 
+    const user = await this.usersRepository.findById(
+      passwordResetToken.user_id,
+    );
+
+    if (!user) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    const isReusedPassword = await bcrypt.compare(
+      password,
+      user.password_hash,
+    );
+
+    if (isReusedPassword) {
+      throw new BadRequestException(
+        'New password must be different from old password',
+      );
+    }
+
     const passwordHash = await bcrypt.hash(password, 10);
 
     await this.usersRepository.updatePassword(
